@@ -1,0 +1,18 @@
+{
+    "contents" : "source(\"preprocess.R\")\nsource(\"../handshake_9_11/model/GloableConvert.R\")\nsource(\"./utils.R\")\n\nglassRaw = read.csv(\"./datas/2_17/Glass_3.csv\")\ntopRaw = read.csv(\"./datas/2_17/Top_3.csv\")\nleftPantsRaw = read.csv(\"./datas/2_17/LeftPants_3.csv\")\nrightPantsRaw = read.csv(\"./datas/2_17/RightPants_3.csv\")\nleftHandRaw = read.csv(\"./datas/2_17/LeftHand_3.csv\")\nrightHandRaw = read.csv(\"./datas/2_17/RightHand_3.csv\")\n\n\nmean(topRaw$ConvertedData0)\nmean(topRaw$ConvertedData1)\nmean(topRaw$ConvertedData2)\n\nsd(rightHandRaw$ConvertedData0)\nsd(rightHandRaw$ConvertedData1)\nsd(rightHandRaw$ConvertedData2)\n",
+    "created" : 1455699194163.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1585622733",
+    "id" : "830C919F",
+    "lastKnownWriteTime" : 1455699749,
+    "path" : "~/workspace/R/multidevicealign/avgData.R",
+    "project_path" : "avgData.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

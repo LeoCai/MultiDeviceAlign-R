@@ -1,0 +1,18 @@
+{
+    "contents" : "pcaData = c()\n\naddPCAData = function(magnitude2D){\n  pcaData <<- cbind(pcaData, magnitude2D)\n}\n\naddDeviceDataToPCA2 = function(myData, tag= \"\"){\n  firstData = myData[1,]\n  gvInit = cbind(firstData$Gravity0,firstData$Gravity1,firstData$Gravity2)\n  mgInit = cbind(firstData$MagnetData0,firstData$MagnetData1,firstData$MagnetData2)\n  initRotationMatirx = getMatrixByMag(gvInit,mgInit)\n  globalAccs = getGlobalAccByMag(myData)\n  globalAccs[,3] = 0; #proj on horizontal\n  # matplot(globalAccs,type = \"l\",col = c(1,2,3),main = \"global accs\")\n  rotatedGlobal = c()\n  for (i in 1:nrow(globalAccs)) {\n#     temp = initRotationMatirx %*% matrix(globalAccs[i,],nrow = 3,byrow = F)\n#     rotatedAcc = c(temp[1,1],temp[2,1],temp[3,1])\n    rotatedAcc = rotationByMatrix(globalAccs[i,],initRotationMatirx)\n    # rotatedAccOnHori = computeProjOnHoriSingleData(rotatedAcc,gvInit)\n    rotatedGlobal = rbind(rotatedGlobal, rotatedAcc)\n  }\n  for(i in 1:3){\n    addPCAData(rotatedGlobal[,i])\n  }\n}\n\naddDeviceDataToPCA = function(deviceData, tag= \"\"){\n  pHData = c()\n  for(i in 1:nrow(deviceData)){\n    singleData = deviceData[i,]\n    lv = cbind(singleData$LinearAcc0,singleData$LinearAcc1,singleData$LinearAcc2)\n    gv = cbind(singleData$Gravity0,singleData$Gravity1,singleData$Gravity2)\n    # lv2 = cbind(singleData$lv1,singleData$lv2,singleData$lv3)\n    # gv2 = cbind(singleData$gv1,singleData$gv2,singleData$gv3)\n    # print(paste(lv-lv2,gv-gv2))\n    pH = computeProjOnHoriSingleData(lv,gv)\n    pHData = c(pHData, absVector1(pH))\n  }\n  # plot(pHData, type=\"l\", main= paste(tag, \"projection on horizontal\"),ylab = \"acc(m/s^2)\", cex.lab=1.5,cex.main=1.5)\n  addPCAData(pHData)\n}\n\ncomputeFc = function() {\n  pcaData <<- c()\n  addDeviceDataToPCA(top,\"top\")\n  addDeviceDataToPCA(leftHand,\"leftHand\")\n  addDeviceDataToPCA(rightHand,\"rightHand\")\n  addDeviceDataToPCA(rightPants,\"rightPants\")\n  addDeviceDataToPCA(leftPants,\"leftPants\")\n  addDeviceDataToPCA(glass,\"glass\")\n  # write.csv(pcaData,\"./summary_fi_fc_pca_angle_cor/pcaData.csv\",row.names = F)\n  epca6A <- prcomp(pcaData,\n                   center = F,\n                   scale. = F)\n  print(epca6A$sdev^2)\n  # plot(epca6A$sdev,type = \"l\" ,main = \"egvalue\")\n  newData = predict(epca6A, newdata = pcaData)\n  pcaForward = -newData[selectIndex,1]\n  if(abs(min(pcaForward))<abs(max(pcaForward))) pcaForward = -pcaForward\n  plot(pcaForward[1:150],type=\"l\",main=\"Fc\",ylim = c(-2,2))\n  return(pcaForward)\n}\n\n",
+    "created" : 1457403201401.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4021652829",
+    "id" : "63E22E4A",
+    "lastKnownWriteTime" : 1457832187,
+    "path" : "~/workspace/R/multidevicealign/addPCAData.R",
+    "project_path" : "addPCAData.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

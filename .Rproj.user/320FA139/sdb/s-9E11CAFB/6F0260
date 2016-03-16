@@ -1,0 +1,18 @@
+{
+    "contents" : "testAlign = function(data1, data2,s1,e1,tag = \"\") {\n  c1 = sqrt(data1$Acc0 ^ 2 + data1$Acc1 ^ 2 + data1$Acc2 ^ 2)\n  c2 = sqrt(data2$Acc0 ^ 2 + data2$Acc1 ^ 2 + data2$Acc2 ^ 2)\n  c11 = c1[s1:e1]\n  maxCor = 0\n  maxS2 = s1\n  maxE2 = e1\n  range = round(s1 / 2)\n  for (i in 1:range) {\n    s2 = s1 - range / 2 + i\n    e2 = e1 - range / 2 + i\n    c22 = c2[s2:e2]\n    cvdata = cor(c11,c22)\n    # print(paste(s2,e2,cvdata))\n    if (cvdata > maxCor) {\n      maxS2 = s2; maxE2 = e2\n      maxCor = cvdata\n    }\n    # print(cvdata)\n  }\n  c22 = c2[maxS2:maxE2]\n  # matplot(1:length(c11),cbind(c11,c22),type = \"l\",main = paste(tag,round(maxCor, 4)))\n  # print(paste(tag,\"[\",maxS2,\":\",maxE2,\",]\", sep = \"\"))\n  # print(round(maxCor, 4))\n  # print(\"\")\n  return (c(maxS2,maxE2))\n  # matplot(1:length(c1),cbind(c1,c2),type=\"l\",main = round(cor(c1,c2), 4) )\n}\n\nmylowpass = function(top) {\n  return(as.data.frame(rollapply(top,3,mean)))\n}\n\npath = 2\ni = 3\ns = 100\ne = 3000\nfileParent = \"3_9_data_3path\"\n\nreadSample = function(path,i,s,e){\n  top_data = read.csv(paste(\"./datas/\",fileParent,\"/top/\",path,i,\".csv\",sep = \"\"))\n  leftHand_data = read.csv(paste(\"./datas/\",fileParent,\"/lefthand/\",path,i,\".csv\",sep = \"\"))\n  rightHand_data = read.csv(paste(\"./datas/\",fileParent,\"/righthand/\",path,i,\".csv\",sep = \"\"))\n  leftPants_data = read.csv(paste(\"./datas/\",fileParent,\"/leftpants/\",path,i,\".csv\",sep = \"\"))\n  rightPants_data = read.csv(paste(\"./datas/\",fileParent,\"/rightpants/\",path,i,\".csv\",sep = \"\"))\n  glass_data = read.csv(paste(\"./datas/\",fileParent,\"/glass/\",path,i,\".csv\",sep = \"\"))\n  \n  r = testAlign(top_data, top_data,s,e,\"top\")\n  top <<- top_data[r[1]:r[2],]\n  \n  r = testAlign(top_data, leftHand_data,s,e,\"lefthand\")\n  leftHand <<- leftHand_data[r[1]:r[2],]\n  \n  r = testAlign(top_data, rightHand_data,s,e,\"righthand\")\n  rightHand <<- rightHand_data[r[1]:r[2],]\n  \n  r = testAlign(top_data, leftPants_data,s,e,\"leftpants\")\n  leftPants <<- leftPants_data[r[1]:r[2],]\n  \n  r = testAlign(top_data, rightPants_data,s,e,\"rightpants\")\n  rightPants <<- rightPants_data[r[1]:r[2],]\n  \n  r = testAlign(top_data, glass_data,s,e,\"glass\")\n  glass <<- glass_data[r[1]:r[2],]\n  \n  top <<- mylowpass(top)\n  leftHand <<- mylowpass(leftHand)\n  rightHand <<- mylowpass(rightHand)\n  leftPants <<- mylowpass(leftPants)\n  rightPants <<- mylowpass(rightPants)\n  glass <<- mylowpass(glass)\n}\n\n\n",
+    "created" : 1457773311991.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3803024837",
+    "id" : "6F0260",
+    "lastKnownWriteTime" : 1457745636,
+    "path" : "~/workspace/R/multidevicealign/time_align_3_9.R",
+    "project_path" : "time_align_3_9.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

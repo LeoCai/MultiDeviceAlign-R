@@ -1,0 +1,11 @@
+source("./utils.R")
+source("./getMatrixByMag.R")
+source("./readData_new_1.R")
+source("./addPCAData.R")
+
+lacctop = cbind(top$LinearAcc0,top$LinearAcc1,top$LinearAcc2)
+gacctop = getGlobalAccByMag(top)
+plot(gacctop[200:1000,2],type="l",main="global top forward")
+cor(gacctop[200:1000,2],lacctop[200:1000,3])
+plot(lacctop[200:1000,3],type="l",main = "top forward")
+matplot(lacctop[100:800,],type="l",main = "top")

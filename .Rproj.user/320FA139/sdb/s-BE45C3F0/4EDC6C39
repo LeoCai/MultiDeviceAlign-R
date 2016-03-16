@@ -1,0 +1,18 @@
+{
+    "contents" : "source(\"./utils.R\")\nsource(\"./timealign_3_2.R\")\nsource(\"./getMatrixByMag.R\")\nsource(\"./addPCAData.R\")\nsource(\"./plot_debug.R\")\nlibrary(zoo)\n\n# globalacc = getGlobalAccByMag(top)\n# lowpasstop = rollapply(top,5,mean)\n# lowpasstop = as.data.frame(lowpasstop)\n# globalacclp = getGlobalAccByMag(lowpasstop)\n# matplot(cbind(globalacc[1:300,2],globalacclp[1:300,2]),type=\"l\")\n# plot(globalacc[,2],type = \"l\")\n\nselectIndex = 1:699\n\naddDeviceDataToPCA = addDeviceDataToPCA2\n\ngacctop = getGlobalAccByMag(top)\n\n# plot(gacctop[selectIndex,2],type=\"l\",main=\"top forward\")\n# cor(-Fc[selectIndex], gacctop[selectIndex,2])\n\nFc = computeFc()\ngetAngleSimple = function(mdata, tag = \"\", plot3d = F) {\n  globalAcc = getGlobalAccByMag(mdata)[selectIndex,]\n  globalAcc[,3] = 0\n#   a = 23/180*pi\n#   rm = matrix(c(cos(a),sin(a),0,sin(a),cos(a),0,0,0,1),nrow = 3,ncol = 3, byrow = T)\n#   for(i in 1:nrow(globalAcc)){\n#     globalAcc[i,] = rotationByMatrix(globalAcc[i,],rm)\n#   }\n  Fi = globalAcc\n  tr = 0.01; results = c()\n  dimStr = c(\"x\",\"y\",\"z\")\n  for (dim in 1:3) {\n    # mean = 0;count = 0\n    fiFc = c()\n    EFi = mean(Fi[,dim])\n    EFc = mean(Fc)\n    print(paste(EFi,EFc))\n    meanR = EFi / EFc\n    results = c(results,meanR)\n  }\n  angle = computeAngle(results,c(0,1,0))\n  sig = getDirection(results, c(0,1,0),c(0,0,1))\n  print(tag)\n  print(results)\n  print(sig * angle)\n  if (plot3d) {\n    init3d(tag)\n    myArrow3d(results * 4,2)\n    for (i in 1:nrow(globalAcc)) {\n      myArrow3d(globalAcc[i,])\n    }\n  }\n}\ngetAngleSimple(top, \"top\",F)\ngetAngleSimple(leftHand, \"leftHand\",F)\ngetAngleSimple(rightHand, \"rightHand\",F)\ngetAngleSimple(leftPants, \"leftPants\",F)\ngetAngleSimple(rightPants, \"rightPants\",F)\ngetAngleSimple(glass, \"glass\",F)\n",
+    "created" : 1456992204198.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "35|20|43|2|\n49|15|55|2|\n",
+    "hash" : "1994770312",
+    "id" : "4EDC6C39",
+    "lastKnownWriteTime" : 1457072718,
+    "path" : "~/workspace/R/multidevicealign/exp_fi_fc_new2.R",
+    "project_path" : "exp_fi_fc_new2.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "type" : "r_source"
+}
