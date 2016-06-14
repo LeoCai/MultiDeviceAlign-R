@@ -1,3 +1,7 @@
+#Author: LeoCai
+#实验：利用平均值计算三个轴的角度
+
+
 source("./utils.R")
 source("./time_align_3_9.R")
 source("./getMatrixByMag.R")
@@ -21,6 +25,9 @@ fileParent = "3_10_data"
 smallOrLarge = "large"
 
 getAngleSimple = function(mdata,magDrift, tag = "", plot3d = F) {
+#利用平均值计算三个轴的角度
+#利用PCA相关性计算三个轴角度
+
   globalAcc = getGlobalAccByMag(mdata)[selectIndex,]
   globalAcc[,3] = 0
   avgX = mean(globalAcc[,1])
@@ -29,10 +36,7 @@ getAngleSimple = function(mdata,magDrift, tag = "", plot3d = F) {
   angle = 180-(atan2(avgX,avgY)/pi*180)
   if(angle> 180) angle = angle-360
   if(angle< -180) angle = angle+360
-#   # sig = getDirection(results, c(0,1,0),c(0,0,1))
-#   if(avgX>0) sig = 1 else sig = -1
-#   angle = sig*angle
-#   angle = angle - magDrift
+
   
   radAngle = angle/180*pi
   rtm = matrix(c(cos(radAngle), sin(radAngle), 0, -sin(radAngle), cos(radAngle),0, 0, 0, 1),nrow = 3,ncol = 3)
@@ -52,11 +56,15 @@ getAngleSimple = function(mdata,magDrift, tag = "", plot3d = F) {
 }
 
 addResults = function(results,path,i,deviceNum){
+#添加结果到矩阵中，用于统计结果
   angleResults[(path-1)*8+i,deviceNum] <<- results[1]; 
   pcaCorResults[(path-1)*8+i,deviceNum] <<- results[2]; 
   deviceNum<<- deviceNum+1
 }
 
+
+#遍历数据集
+#
 for(smallOrLarge in c("small")){
   for(window in c(15)){
     selectIndex <<- 1:(50*window)

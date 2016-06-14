@@ -50,7 +50,6 @@ getCarlibratedMatirx = function(computedInitGV, initRealGV){
 }
 
 carlibrate = function(rm2,rotationAxis, gyromatrix){
-#计算最优的校准
   mindist = 10000000;  bestAngle = 0;  bestRm = 0
   
   for(angle in 0:360){

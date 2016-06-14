@@ -92,7 +92,6 @@ addDeviceDataToPCA = addDeviceDataToPCA2
 gacctop = getGlobalAccByMag(top)
 
 computeFc = function() {
-#计算ＰＣＡ相关的力
   pcaData <<- c()
   addDeviceDataToPCA(top,"top")
   addDeviceDataToPCA(leftHand,"leftHand")

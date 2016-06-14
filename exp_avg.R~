@@ -1,5 +1,6 @@
 #Author: LeoCai
-#根据相关性和平均值分别求角度
+#实验：利用平均值计算三个轴的角度
+
 
 source("./utils.R")
 source("./time_align_3_9.R")
@@ -24,35 +25,17 @@ fileParent = "3_10_data"
 smallOrLarge = "large"
 
 getAngleSimple = function(mdata,magDrift, tag = "", plot3d = F) {
+#利用平均值计算三个轴的角度
+
   globalAcc = getGlobalAccByMag(mdata)[selectIndex,]
   globalAcc[,3] = 0
-  # matplot(cbind(Fc[1:150],globalAcc[1:150,2]),type = "l",main = paste(tag, "fc_fi"))
-  Fi = globalAcc
-  tr = 0.01; results = c()
-  dimStr = c("x","y","z")
-  for (dim in 1:3) {
-    # mean = 0;count = 0
-    fiFc = c()
-    EFi = mean(Fi[,dim])
-    EFc = mean(Fc)
-    print(paste(EFi,EFc))
-    meanR = EFi / EFc
-    results = c(results,meanR)
-  }
-  angle = computeAngle(results,c(0,1,0))
-  sig = getDirection(results, c(0,1,0),c(0,0,1))
-  angle = sig*angle
-  angle = angle - magDrift
-  print(tag)
-  # print(results)
-  # print(angle)
-  if (plot3d) {
-    init3d(tag)
-    myArrow3d(results * 4,2)
-    for (i in 1:nrow(globalAcc)) {
-      myArrow3d(globalAcc[i,])
-    }
-  }
+  avgX = mean(globalAcc[,1])
+  avgY = mean(globalAcc[,2])
+  results = c(avgX,avgY,0)
+  angle = 180-(atan2(avgX,avgY)/pi*180)
+  if(angle> 180) angle = angle-360
+  if(angle< -180) angle = angle+360
+
   
   radAngle = angle/180*pi
   rtm = matrix(c(cos(radAngle), sin(radAngle), 0, -sin(radAngle), cos(radAngle),0, 0, 0, 1),nrow = 3,ncol = 3)
@@ -72,13 +55,14 @@ getAngleSimple = function(mdata,magDrift, tag = "", plot3d = F) {
 }
 
 addResults = function(results,path,i,deviceNum){
+#添加结果到矩阵中，用于统计结果
   angleResults[(path-1)*8+i,deviceNum] <<- results[1]; 
   pcaCorResults[(path-1)*8+i,deviceNum] <<- results[2]; 
   deviceNum<<- deviceNum+1
 }
 
 for(smallOrLarge in c("small")){
-  for(window in c(5)){
+  for(window in c(15)){
     selectIndex <<- 1:(50*window)
     
     if(smallOrLarge == "large") {
@@ -87,8 +71,8 @@ for(smallOrLarge in c("small")){
       pathIndex <<- 1:3
     }
     
-    for(path in 1){
-      for(i in 1){
+    for(path in pathIndex){
+      for(i in 1:8){
         
         print(paste(smallOrLarge,"window:",window,"path",path,"i",i,"--------------------------------"))
         
@@ -98,7 +82,6 @@ for(smallOrLarge in c("small")){
         
         gacctop = getGlobalAccByMag(top)
         
-        Fc <<- computeFc()
         
         deviceNum = 1
         
@@ -120,8 +103,8 @@ for(smallOrLarge in c("small")){
     }
     angleResults = as.data.frame(angleResults);names(angleResults) = c("glass","top","lefthand","righthand","leftpants","rightpants")
     pcaCorResults = as.data.frame(pcaCorResults);names(pcaCorResults) = c("glass","top","lefthand","righthand","leftpants","rightpants")
-    write.csv(angleResults,paste("./summary_fi_fc_pca_angle_cor/angleResults_",smallOrLarge,"_",window,".csv",sep = ""),row.names = F)
-    write.csv(pcaCorResults,paste("./summary_fi_fc_pca_angle_cor/pcaCorResults_",smallOrLarge,"_",window,".csv",sep = ""),row.names = F)
+    write.csv(angleResults,paste("./summary_avg/angleResults_",smallOrLarge,"_",window,".csv",sep = ""),row.names = F)
+    write.csv(pcaCorResults,paste("./summary_avg/pcaCorResults_",smallOrLarge,"_",window,".csv",sep = ""),row.names = F)
     print(angleResults)
     print(pcaCorResults)
   }

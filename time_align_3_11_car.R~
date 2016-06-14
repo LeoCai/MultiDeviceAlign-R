@@ -2,12 +2,6 @@
 #左右移动寻找最佳位置使设备间和合速度相关性最大
 
 testAlign = function(data1, data2,s1,e1,tag = "") {
-#时域对齐
-#data1:基准数据
-#data2:被校准数据
-#s1:基准数据的开始索引
-#e1:基准数据的结束索引
-#tag:画图名称
   c1 = sqrt(data1$Acc0 ^ 2 + data1$Acc1 ^ 2 + data1$Acc2 ^ 2)
   c2 = sqrt(data2$Acc0 ^ 2 + data2$Acc1 ^ 2 + data2$Acc2 ^ 2)
   c11 = c1[s1:e1]

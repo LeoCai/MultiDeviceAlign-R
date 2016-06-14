@@ -33,9 +33,9 @@ addResults = function(results,path,i,deviceNum){
 
 gyroConvert = function(mdata,tag = "", lowpass=T, gyrpercent = 0.9){
 #重要：利用陀螺仪根据算法，多种同时计算
-#返回：cor_uncarlibrated:仅用陀螺仪校准
-#cor_complementary1：补偿滤波
-#cor_carlibrated：利用重力校准矩阵
+#返回：cor_uncarlibrated:
+#cor_complementary1,
+#cor_carlibrated
   driftVerticalArray <<- c(); driftMagArray <<- c(); driftVertical = 0;driftMag = 0;
   driftVerticalArray_Carlibrated <<- c(); driftMagArray_Carlibrated <<- c();driftVertical_Carlibrated = 0;driftMag_Carlibrated = 0;
   driftVerticalArray_Complementary1<<- c(); driftMagArray_Complementary1 <<- c();driftVertical_Complementary1 = 0;driftMag_Complementary1 = 0;

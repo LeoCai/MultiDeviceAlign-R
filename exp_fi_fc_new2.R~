@@ -1,5 +1,5 @@
 #Author: LeoCai
-#根据相关性和平均值分别求角度
+#
 
 source("./utils.R")
 source("./time_align_3_9.R")
