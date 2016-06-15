@@ -1,4 +1,4 @@
-%不同时间陀螺仪偏移
+%sadas
 
 s1_drift = importdata('drift_GLASS.csv')
 s2_drift = importdata('drift_TOP.csv')
