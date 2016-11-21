@@ -87,8 +87,8 @@ for(smallOrLarge in c("small")){
       pathIndex <<- 1:3
     }
     
-    for(path in 1){
-      for(i in 1){
+    for(path in pathIndex){
+      for(i in 1:5){
         
         print(paste(smallOrLarge,"window:",window,"path",path,"i",i,"--------------------------------"))
         
@@ -99,6 +99,9 @@ for(smallOrLarge in c("small")){
         gacctop = getGlobalAccByMag(top)
         
         Fc <<- computeFc()
+        cor_Fc_Linear = cor(Fc, top$LinearAcc2[selectIndex])
+        
+        print(paste("cor_Fc_Linear",cor_Fc_Linear))
         
         deviceNum = 1
         
@@ -122,8 +125,8 @@ for(smallOrLarge in c("small")){
     pcaCorResults = as.data.frame(pcaCorResults);names(pcaCorResults) = c("glass","top","lefthand","righthand","leftpants","rightpants")
     write.csv(angleResults,paste("./summary_fi_fc_pca_angle_cor/angleResults_",smallOrLarge,"_",window,".csv",sep = ""),row.names = F)
     write.csv(pcaCorResults,paste("./summary_fi_fc_pca_angle_cor/pcaCorResults_",smallOrLarge,"_",window,".csv",sep = ""),row.names = F)
-    print(angleResults)
-    print(pcaCorResults)
+    print(paste("angle results",angleResults))
+    # print(pcaCorResults)
   }
 }
 
