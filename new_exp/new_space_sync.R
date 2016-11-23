@@ -1,5 +1,6 @@
-computeFC = function(sensor_data_set){
+computeFC = function(sensor_data_set, isPrePCA = F){
   pcaData = c()
+  horizental_data_set = list()
   for(i in 1:length(sensor_data_set)){
     sensor_data = sensor_data_set[[i]]; firstData = sensor_data[1,]
     gvInit = cbind(firstData$Gravity0, firstData$Gravity1, firstData$Gravity2)
@@ -8,14 +9,21 @@ computeFC = function(sensor_data_set){
     globalAccs = getGlobalAccByMag(sensor_data)
     globalAccs[,3] = 0; #proj on horizontal
     rotatedGlobal = c()
-    for (i in 1:nrow(globalAccs)) {
-      rotatedAcc = rotationByMatrix(globalAccs[i,],initRotationMatirx)
+    for (j in 1:nrow(globalAccs)) {
+      rotatedAcc = rotationByMatrix(globalAccs[j,],initRotationMatirx)
       rotatedGlobal = rbind(rotatedGlobal, rotatedAcc)
     }
-    for(i in 1:3){  pcaData = cbind(pcaData, rotatedGlobal[,i]);  }
+    horizental_data_set[[i]] = rotatedGlobal
+  }
+  if(isPrePCA){
+    horizental_data_set = prePCAProcess(horizental_data_set)
+  }
+  for(i in 1:length(horizental_data_set)){
+    rotatedGlobal = horizental_data_set[[i]]
+    for(j in 1:3){  pcaData = cbind(pcaData, rotatedGlobal[,j]);  }
   }
   epca6A <- prcomp(pcaData, center = F, scale. = F)
-  print(epca6A$sdev^2)
+  # print(epca6A$sdev^2)
   # plot(epca6A$sdev,type = "l" ,main = "egvalue")
   newData = predict(epca6A, newdata = pcaData)
   # have some problem here
@@ -24,6 +32,46 @@ computeFC = function(sensor_data_set){
   if(abs(min(pcaForward))<abs(max(pcaForward))) pcaForward = -pcaForward
   plot(pcaForward[50:250],type="l",main="Fc")
   return(pcaForward)
+}
+
+smoothByFFt = function(sensor_data_set, ratio){
+  for(i in 1:length(sensor_data_set)){
+    sensor_data = sensor_data_set[[i]]
+    for(j in 1:ncol(sensor_data)){
+      ds = sensor_data[,j]
+      L = length(ds)/2+1
+      ids = (L-ratio*L):(L + ratio*L)
+      fft_ds = fft(ds)
+      fft_ds[ids] = 0
+      sensor_data[,j] = abs(ifft(fft_ds))
+    }
+    sensor_data_set[[i]] = sensor_data
+  }
+  return(sensor_data_set)
+}
+
+prePCAProcess = function(sensor_data_set){
+  #remove left right using pca
+  first_data = list()
+  first = FALSE
+  processed_data = list()
+  for( i in 1:length(sensor_data_set)){
+    sensor_data = sensor_data_set[[i]]
+    epca6A <- prcomp(sensor_data, center = F, scale. = F)
+    newData = predict(epca6A, newdata = sensor_data)
+    if(!first) {
+      first_data = newData;
+      first = TRUE
+    }
+    else {
+      # reverse direction
+      if(cor(newData[1:50,1],first_data[1:50,1])<0){ newData = -newData }
+    }
+    newData[,2:3] = 0
+    removed_data = t(t(newData %*% t(epca6A$rotation)) + epca6A$center)
+    processed_data[[i]] = removed_data
+  }
+  return(processed_data)
 }
 
 testAlign = function(data1, data2,s1,e1,tag = "") {
@@ -38,13 +86,8 @@ testAlign = function(data1, data2,s1,e1,tag = "") {
     if (cvdata > maxCor) { best_start2 = s2; best_end2 = e2; maxCor = cvdata}
   }
   data2_selected = c2[best_start2:best_end2]
-  matplot(1:length(data1_selected),cbind(data1_selected, data2_selected),type = "l",main = paste(tag,round(maxCor, 4)))
+  # matplot(1:length(data1_selected),cbind(data1_selected, data2_selected),type = "l",main = paste(tag,round(maxCor, 4)))
   return (best_start2:best_end2)
-}
-
-appendList = function(old_list, new_data){
-  old_list[[length(old_list)+1]] = new_data
-  return(old_list)
 }
 
 alignData = function(sensor_data_set, start=50, end = 300 ){
@@ -68,14 +111,14 @@ sensorSmooth= function(sensor_data_set, smooth_size = 3){
   return(sensor_data_set)
 }
 
-syncByFc = function(sensor_data, Fc, tag = "", plot3d = F) {
+syncByFc = function(horizental_acc, Fc, tag = "", plot3d = F) {
   #just use hroizontal vector
   #compare result vector to c(0, 1, 0)
   #1. compute Fc vector
   #2. compute angle
-  globalAcc = getGlobalAccByMag(sensor_data)
-  globalAcc[,3] = 0
-  Fi = globalAcc; Fc_direction = c();
+  # horizental_acc = getGlobalAccByMag(sensor_data)
+  # horizental_acc[,3] = 0
+  Fi = horizental_acc; Fc_direction = c();
   
   for (dim in 1:3) {
     EFi = mean(Fi[,dim]); EFc = mean(Fc); 
@@ -84,6 +127,7 @@ syncByFc = function(sensor_data, Fc, tag = "", plot3d = F) {
   }
   Fc_vector = c()
   for (i in 1:length(Fc)) { Fc_vector = rbind(Fc_vector, Fc[i] * unitVector(Fc_direction)) }
+  # print(paste("uni_direction",unitVector(Fc_direction)))
   
   Fi_noise = Fc_vector - Fi
   Fi_noise = as.data.frame(Fi_noise)
@@ -91,50 +135,60 @@ syncByFc = function(sensor_data, Fc, tag = "", plot3d = F) {
   
   Fc_Magnitude  = sqrt(Fc_vector[,1] ^ 2 + Fc_vector[,2] ^ 2 + Fc_vector[,3] ^ 2)
   Fi_noise_Magnitude = sqrt(Fi_noise[,1] ^ 2 + Fi_noise[,2] ^ 2 + Fi_noise[,3] ^ 2)
+  # print(paste("Fc_direction", Fc_direction))
   angle = computeAngle(Fc_direction, c(0,1,0))
   sig = getDirection(Fc_direction, c(0,1,0), c(0,0,1))
+  if(angle > 90 && angle < 180) angle = 180-angle
+  else if(angle < -90  && angle > - 180) angle = -180 - angle
   
   print(sig * angle)
   
   if (plot3d) {
     init3d(tag); myArrow3d(Fc_direction * 4,2)
-    for (i in 1:nrow(globalAcc)) { myArrow3d(globalAcc[i,]); }
+    for (i in 1:nrow(horizental_acc)) { myArrow3d(horizental_acc[i,]); }
   }
   return (list(Fc_direction= Fc_direction, offset_result =sig*angle))
 }
 
-space_sync = function(sensor_data_set, smoothNum = 3, start_id = 50, end_id = 300){
+getHorizentalAcc = function(sensor_data_set){
+  for(i in 1:length(sensor_data_set)){
+    sensor_data = sensor_data_set[[i]]
+    globalAccs = getGlobalAccByMag(sensor_data)
+    globalAccs[,3] = 0
+    sensor_data_set[[i]] = globalAccs
+  }
+  return(sensor_data_set)
+}
+
+space_sync = function(sensor_data_set, smoothNum = 3, start_id = 50, end_id = 300, isPrePCA = F){
+  # sensor_data_set = smoothByFFt(sensor_data_set, ratio = 0.8)
+  sensor_data_set = sensorSmooth(sensor_data_set, smooth_size = smoothNum)
   aligned_data_set = alignData(sensor_data_set, start = start_id, end = end_id)
-  smothed_data_set = sensorSmooth(aligned_data_set, smooth_size = smoothNum)
-  fc = computeFC(smothed_data_set)
+  # smothed_data_set = sensorSmooth(aligned_data_set, smooth_size = smoothNum)
+  fc = computeFC(aligned_data_set, isPrePCA = isPrePCA)
   totalInfo = list()
   final_results = list()
-  for(i in 1:length(sensor_data_set)){
-    sync_result = syncByFc(aligned_data_set[[i]], fc)
+  horizental_acc = getHorizentalAcc(aligned_data_set)
+  if(isPrePCA){
+    horizental_acc = prePCAProcess(horizental_acc)
+  }
+  for(i in 1:length(horizental_acc)){
+    sync_result = syncByFc(horizental_acc[[i]], fc)
+    # print(sync_result)
     final_results[[i]] = sync_result
   }
   totalInfo$final_results = final_results
   totalInfo$FC = fc
-  totalInfo$smothed_aligned_data_set = smothed_data_set
+  totalInfo$smothed_aligned_data_set = horizental_acc
   return(totalInfo)
 }
+ds1 = readDataSet("./new_exp/datas/run_bulding_north/","run",2)
+# info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = F)
+# info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = T)
 
-plotSingleData = function(fc,fileName,writeFile = F){
-  if(writeFile){ png(paste("./new_exp/imags/",fileName,".png",sep=""), width = 1024, height = 768) }
-  plot(fc, type = "l", main = fileName, cex.main = 2, cex.lab = 2, lty=1, lwd = 1.5,xlab = "index(50HZ)", ylab = "accerometer")
-  if(writeFile){ dev.off() }
-}
+# info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = F)
+
+# info_walk_1 = space_sync(readSample(1, 1), start_id = 150, end_id = 800, smoothNum = 3)
 
 
-plotData = function(fc_top, fileName, legendName, writeFile=F ){
-  if(writeFile){ png(paste("./new_exp/imags/",fileName,".png",sep=""), width = 1024, height = 768) }
-  matplot(fc_top, type="l", main = fileName, cex.main = 2, cex.lab = 2, lty=1, lwd = 1.5,xlab = "index(50HZ)", ylab = "accerometer")
-  legend("topright",legend = legendName,lty = 1,col = 1:3,cex = 2)
-  if(writeFile){ dev.off() }
-}
-
-plotFcTop = function(fc, top, fileName, writeFile = F){
-  fc_top = cbind(fc, top)
-  legendName = c("FC","TOP")
-  plotData(fc_top, fileName, legendName, writeFile)
-}
+# info_walk = space_sync(list(walk_top, walk_legr, walk_legl), start_id = 150, end_id = 800, smoothNum = 5)

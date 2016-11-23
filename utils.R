@@ -1,6 +1,11 @@
 source("../handshake_9_11/model/GloableConvert.R")
 library(zoo)
 
+appendList = function(old_list, new_data){
+  old_list[[length(old_list)+1]] = new_data
+  return(old_list)
+}
+
 lowFilter = function(mdata,n = 3){
   # rollapply(mdata,n,mean)
   bf = butter(1, 1/8)

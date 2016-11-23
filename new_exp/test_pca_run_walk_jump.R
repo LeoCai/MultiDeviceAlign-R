@@ -2,7 +2,8 @@ library(zoo)
 source("./new_exp/test_read.R")
 source("./utils.R")
 source("./getMatrixByMag.R")
-source("./test_resultant_acc.R")
+source("./new_exp/data_plot_func.R")
+# source("./test_resultant_acc.R")
 source("./new_exp/new_space_sync.R")
 
 info_walk = space_sync(list(walk_top, walk_legr, walk_legl), start_id = 150, end_id = 800, smoothNum = 5)
@@ -16,7 +17,7 @@ cor_fc_walk = round(cor(info_walk$FC, -info_walk$smothed_aligned_data_set[[1]]$C
 plotFcTop(info_walk$FC, -info_walk$smothed_aligned_data_set[[1]]$ConvertedData1, paste("FC_TOP_WALK", cor_fc_walk,sep="_"), T)
 plotSingleData(info_walk$FC, "FC_WALK",T)
 
-info_run = space_sync(list(run_top, run_legr, run_legl), smoothNum = 3)
+info_run = space_sync(list(run_top, run_legr, run_legl), smoothNum = 1)
 cor_fc_run = round(cor(info_run$FC, info_run$smothed_aligned_data_set[[1]]$ConvertedData1),2)
 plotFcTop(info_run$FC, info_run$smothed_aligned_data_set[[1]]$ConvertedData1, paste("FC_TOP_RUN", cor_fc_run,sep="_"), T)
 plotSingleData(info_run$FC, "FC_RUN",T)
