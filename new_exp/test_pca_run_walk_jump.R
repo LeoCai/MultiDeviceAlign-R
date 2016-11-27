@@ -6,7 +6,7 @@ source("./new_exp/data_plot_func.R")
 # source("./test_resultant_acc.R")
 source("./new_exp/new_space_sync.R")
 
-info_walk = space_sync(list(walk_top, walk_legr, walk_legl), start_id = 150, end_id = 800, smoothNum = 5)
+info_walk = space_sync(list(walk_top, walk_legr, walk_legl), start_id = 150, end_id = 800, smoothNum = 5, isPrePCA = T)
 aligned_data_set = alignData(list(walk_top, walk_legr, walk_legl), start = 150, end = 800)
 
 matplot(cbind(aligned_data_set[[2]]$ResultantAcc[50:200], aligned_data_set[[3]]$ResultantAcc[50:200]),type= "l")

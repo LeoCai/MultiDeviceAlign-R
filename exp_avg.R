@@ -33,7 +33,7 @@ getAngleSimple = function(mdata,magDrift, tag = "", plot3d = F) {
   avgX = mean(globalAcc[,1])
   avgY = mean(globalAcc[,2])
   results = c(avgX,avgY,0)
-  angle = 180-(atan2(avgX,avgY)/pi*180)
+  angle = (atan2(avgX,avgY)/pi*180)
   if(angle> 180) angle = angle-360
   if(angle< -180) angle = angle+360
 

@@ -1,4 +1,5 @@
 library(zoo)
+source("./new_exp/data_plot_func.R")
 source("./new_exp/test_read.R")
 
 
@@ -19,3 +20,6 @@ plotLinear(-walk_top, selected_id = 50:300, "WALK_TOP_LINEAR", F)
 plotLinear(-run_top, selected_id = 50:150, "RUN_TOP_LINEAR", T)
 plotLinear(-upjump_top, selected_id = 50:350, "UP_JUMP_TOP_LINEAR", T)
 plotLinear(-forjump_top, selected_id = 50:350, "FORWARD_JUMP_TOP_LINEAR", T)
+
+# plotLinear(-walk_top, selected_id = 50:300, "WALK_TOP_LINEAR", F)
+plotLinearData(-walk_top,  selected_id = 50:300, "WALK_TOP_LINEAR", c("RIGHT","DOWN","FORWARD"), F)

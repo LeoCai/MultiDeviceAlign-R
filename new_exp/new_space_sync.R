@@ -15,9 +15,9 @@ computeFC = function(sensor_data_set, isPrePCA = F){
     }
     horizental_data_set[[i]] = rotatedGlobal
   }
-  if(isPrePCA){
-    horizental_data_set = prePCAProcess(horizental_data_set)
-  }
+  # if(isPrePCA){
+  #   horizental_data_set = prePCAProcess(horizental_data_set)
+  # }
   for(i in 1:length(horizental_data_set)){
     rotatedGlobal = horizental_data_set[[i]]
     for(j in 1:3){  pcaData = cbind(pcaData, rotatedGlobal[,j]);  }
@@ -29,7 +29,7 @@ computeFC = function(sensor_data_set, isPrePCA = F){
   # have some problem here
   # pcaForward = -newData[,1]
   pcaForward = newData[,1]
-  if(abs(min(pcaForward))<abs(max(pcaForward))) pcaForward = -pcaForward
+  if(abs(min(pcaForward)) < abs(max(pcaForward))) pcaForward = -pcaForward
   plot(pcaForward[50:250],type="l",main="Fc")
   return(pcaForward)
 }
@@ -50,7 +50,7 @@ smoothByFFt = function(sensor_data_set, ratio){
   return(sensor_data_set)
 }
 
-prePCAProcess = function(sensor_data_set){
+prePCAProcess = function(sensor_data_set, removeIndex = 2){
   #remove left right using pca
   first_data = list()
   first = FALSE
@@ -65,9 +65,13 @@ prePCAProcess = function(sensor_data_set){
     }
     else {
       # reverse direction
-      if(cor(newData[1:50,1],first_data[1:50,1])<0){ newData = -newData }
+      # print("cor pre pca")
+      # print(cor(newData[1:100,1], sensor_data[1:100,1]))
+      # print(cor(newData[1:100,2], sensor_data[1:100,2]))
+      if(cor(newData[1:50,removeIndex],first_data[1:50,removeIndex])<0){ newData = -newData }
     }
-    newData[,2:3] = 0
+    # matplot(newData, type="l")
+    newData[,c(removeIndex,3)] = 0
     removed_data = t(t(newData %*% t(epca6A$rotation)) + epca6A$center)
     processed_data[[i]] = removed_data
   }
@@ -151,16 +155,21 @@ syncByFc = function(horizental_acc, Fc, tag = "", plot3d = F) {
 }
 
 getHorizentalAcc = function(sensor_data_set){
+  global_data_set = list()
   for(i in 1:length(sensor_data_set)){
     sensor_data = sensor_data_set[[i]]
-    globalAccs = getGlobalAccByMag(sensor_data)
+    # globalAccs = getGlobalAccByMag(sensor_data)
+    globalAccs = cbind(sensor_data$ConvertedData0, sensor_data$ConvertedData1, sensor_data$ConvertedData2)
     globalAccs[,3] = 0
-    sensor_data_set[[i]] = globalAccs
+    global_data_set[[i]] = globalAccs
+    # print("cor horizental top")
+    # print(cor(globalAccs[1:100,1], sensor_data_set[[1]][1:100,]$LinearAcc2))
+    # print(cor(globalAccs[1:100,2], sensor_data_set[[1]][1:100,]$LinearAcc2))
   }
-  return(sensor_data_set)
+  return(global_data_set)
 }
 
-space_sync = function(sensor_data_set, smoothNum = 3, start_id = 50, end_id = 300, isPrePCA = F){
+space_sync = function(sensor_data_set, smoothNum = 3, start_id = 50, end_id = 300, isPrePCA = F, removeIndex = 2){
   # sensor_data_set = smoothByFFt(sensor_data_set, ratio = 0.8)
   sensor_data_set = sensorSmooth(sensor_data_set, smooth_size = smoothNum)
   aligned_data_set = alignData(sensor_data_set, start = start_id, end = end_id)
@@ -170,20 +179,21 @@ space_sync = function(sensor_data_set, smoothNum = 3, start_id = 50, end_id = 30
   final_results = list()
   horizental_acc = getHorizentalAcc(aligned_data_set)
   if(isPrePCA){
-    horizental_acc = prePCAProcess(horizental_acc)
+    horizental_acc = prePCAProcess(horizental_acc, removeIndex)
   }
   for(i in 1:length(horizental_acc)){
     sync_result = syncByFc(horizental_acc[[i]], fc)
     # print(sync_result)
     final_results[[i]] = sync_result
   }
+  print("")
   totalInfo$final_results = final_results
   totalInfo$FC = fc
   totalInfo$smothed_aligned_data_set = horizental_acc
   return(totalInfo)
 }
-ds1 = readDataSet("./new_exp/datas/run_bulding_north/","run",2)
-# info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = F)
+# ds1 = readDataSet("./new_exp/datas/run_bulding_north/","run",2)
+info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = T, removeIndex = 2)
 # info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = T)
 
 # info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = F)
