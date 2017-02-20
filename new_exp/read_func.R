@@ -1,4 +1,5 @@
 readDataSet = function(path, action, expNum){
+  print(paste("data", action, expNum,"----------------------------"))
   top_path = paste(path, "top/", action, expNum, ".csv", sep="")
   leftpants_path = paste(path, "leftpants/", action, expNum,".csv", sep="")
   rightpants_path = paste(path, "rightpants/", action, expNum, ".csv", sep="")

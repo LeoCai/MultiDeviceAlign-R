@@ -180,21 +180,6 @@
                 "path" : "~/workspace/R/multidevicealign/new_exp/test_top_linear.R",
                 "state" : 2,
                 "type" : 0
-            },
-            {
-                "editor_line_number" : 180,
-                "editor_state" : 1,
-                "function_name" : "space_sync",
-                "function_steps" : "7",
-                "id" : 109,
-                "is_package_breakpoint" : false,
-                "is_pending_debug_completion" : false,
-                "line_number" : 180,
-                "needs_updated_steps" : true,
-                "package_name" : "",
-                "path" : "~/workspace/R/multidevicealign/./new_exp/new_space_sync.R",
-                "state" : 1,
-                "type" : 0
             }
         ]
     }

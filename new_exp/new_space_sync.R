@@ -1,3 +1,5 @@
+source("./rotate_max_target_func.R")
+
 computeFC = function(sensor_data_set, isPrePCA = F){
   pcaData = c()
   horizental_data_set = list()
@@ -13,7 +15,7 @@ computeFC = function(sensor_data_set, isPrePCA = F){
       rotatedAcc = rotationByMatrix(globalAccs[j,],initRotationMatirx)
       rotatedGlobal = rbind(rotatedGlobal, rotatedAcc)
     }
-    horizental_data_set[[i]] = rotatedGlobal
+    horizental_data_set[[i]] = globalAccs
   }
   # if(isPrePCA){
   #   horizental_data_set = prePCAProcess(horizental_data_set)
@@ -30,7 +32,7 @@ computeFC = function(sensor_data_set, isPrePCA = F){
   # pcaForward = -newData[,1]
   pcaForward = newData[,1]
   if(abs(min(pcaForward)) < abs(max(pcaForward))) pcaForward = -pcaForward
-  plot(pcaForward[50:250],type="l",main="Fc")
+  # plot(pcaForward[50:250],type="l",main="Fc")
   return(pcaForward)
 }
 
@@ -109,10 +111,18 @@ alignData = function(sensor_data_set, start=50, end = 300 ){
 sensorSmooth= function(sensor_data_set, smooth_size = 3){
   for(i in 1:length(sensor_data_set)){
     sensorData =  sensor_data_set[[i]]
+    sensorData$Timestamp = NULL
     smoothed = rollapply(sensorData, smooth_size, mean,partial = T)
     sensor_data_set[[i]] = as.data.frame(smoothed)
   }
   return(sensor_data_set)
+}
+
+adjustAngle = function(angle){
+  if(angle>180) angle = angle - 360
+  if(angle > 90 && angle < 180) angle = 180-angle
+  else if(angle < -90  && angle > - 180) angle = -180 - angle
+  return(angle)
 }
 
 syncByFc = function(horizental_acc, Fc, tag = "", plot3d = F) {
@@ -124,10 +134,13 @@ syncByFc = function(horizental_acc, Fc, tag = "", plot3d = F) {
   # horizental_acc[,3] = 0
   Fi = horizental_acc; Fc_direction = c();
   
+  selected_Index = Fc<0
+  
+  
   for (dim in 1:3) {
-    EFi = mean(Fi[,dim]); EFc = mean(Fc); 
+    EFi = mean(Fi[selected_Index, dim]); EFc = mean(Fc); 
     # print(paste(EFi,EFc))
-    meanR = EFi / EFc; Fc_direction = c(Fc_direction,meanR)
+    meanR = EFi; Fc_direction = c(Fc_direction,meanR)
   }
   Fc_vector = c()
   for (i in 1:length(Fc)) { Fc_vector = rbind(Fc_vector, Fc[i] * unitVector(Fc_direction)) }
@@ -142,10 +155,11 @@ syncByFc = function(horizental_acc, Fc, tag = "", plot3d = F) {
   # print(paste("Fc_direction", Fc_direction))
   angle = computeAngle(Fc_direction, c(0,1,0))
   sig = getDirection(Fc_direction, c(0,1,0), c(0,0,1))
-  if(angle > 90 && angle < 180) angle = 180-angle
-  else if(angle < -90  && angle > - 180) angle = -180 - angle
+  angle = adjustAngle(angle)
+  # if(angle > 90 && angle < 180) angle = 180-angle
+  # else if(angle < -90  && angle > - 180) angle = -180 - angle
   
-  print(sig * angle)
+  # print(sig * angle)
   
   if (plot3d) {
     init3d(tag); myArrow3d(Fc_direction * 4,2)
@@ -158,8 +172,7 @@ getHorizentalAcc = function(sensor_data_set){
   global_data_set = list()
   for(i in 1:length(sensor_data_set)){
     sensor_data = sensor_data_set[[i]]
-    # globalAccs = getGlobalAccByMag(sensor_data)
-    globalAccs = cbind(sensor_data$ConvertedData0, sensor_data$ConvertedData1, sensor_data$ConvertedData2)
+    globalAccs = getGlobalAccByMag(sensor_data)
     globalAccs[,3] = 0
     global_data_set[[i]] = globalAccs
     # print("cor horizental top")
@@ -169,36 +182,65 @@ getHorizentalAcc = function(sensor_data_set){
   return(global_data_set)
 }
 
-space_sync = function(sensor_data_set, smoothNum = 3, start_id = 50, end_id = 300, isPrePCA = F, removeIndex = 2){
+noise_remove_func_1 = function(horizental_acc_set, aligned_data_set){
+  rs = list()
+  for(i in 1:length(horizental_acc_set)){
+    horizental_acc = horizental_acc_set[[i]]; dt = aligned_data_set[[i]]$dt
+    r = rotateMaxTarget(horizental_acc, dt, targetFunc_pos)
+    rs[[i]] = r$filted_lacc
+  }
+  return(rs)
+}
+
+copyDataSet = function(sensor_data_set, selected_index){
+  new_set = list()
+  for(i in 1:length(sensor_data_set)){
+    new_set[[i]] = sensor_data_set[[i]][selected_index, ]
+  }
+  return(new_set)
+}
+
+space_sync = function(sensor_data_set, aligned = F, smoothNum = 3, start_id = 50, end_id = 300, noise_remove_func = NULL){
   # sensor_data_set = smoothByFFt(sensor_data_set, ratio = 0.8)
   sensor_data_set = sensorSmooth(sensor_data_set, smooth_size = smoothNum)
-  aligned_data_set = alignData(sensor_data_set, start = start_id, end = end_id)
+  if(!aligned){
+    aligned_data_set = copyDataSet(sensor_data_set, start_id:end_id)
+  }else{
+    aligned_data_set = alignData(sensor_data_set, start = start_id, end = end_id)
+  }
   # smothed_data_set = sensorSmooth(aligned_data_set, smooth_size = smoothNum)
-  fc = computeFC(aligned_data_set, isPrePCA = isPrePCA)
+  fc = computeFC(aligned_data_set, isPrePCA = F)
   totalInfo = list()
   final_results = list()
-  horizental_acc = getHorizentalAcc(aligned_data_set)
-  if(isPrePCA){
-    horizental_acc = prePCAProcess(horizental_acc, removeIndex)
+  horizental_acc_set = getHorizentalAcc(aligned_data_set)
+  if( !is.null(noise_remove_func) ){
+    horizental_acc_set = noise_remove_func(horizental_acc_set, aligned_data_set)
   }
-  for(i in 1:length(horizental_acc)){
-    sync_result = syncByFc(horizental_acc[[i]], fc)
+  par(mfrow=c(2,1))
+  matplot(cbind(horizental_acc_set[[1]], fc), type="l", main ="All Area", lwd = 1.5, lty = 1, ylab="Accerometer", xlab = "Index(50HZ)")
+  legend("topleft", c("RIGHT","FORWARD","DOWN","FC"),col = 1:4, lty=1)
+  matplot(cbind(horizental_acc_set[[1]], fc)[fc>0,], type="l", lty = 1, lwd = 1.5, main ="Selected Area", ylab="Accerometer",  xlab = "Index(50HZ)")
+  legend("topleft", c("RIGHT","FORWARD","DOWN","FC"),col = 1:4, lty=1)
+  for(i in 1:length(horizental_acc_set)){
+    
+    sync_result = syncByFc(horizental_acc_set[[i]], fc)
     # print(sync_result)
     final_results[[i]] = sync_result
   }
-  print("")
+  # print("")
   totalInfo$final_results = final_results
   totalInfo$FC = fc
-  totalInfo$smothed_aligned_data_set = horizental_acc
+  totalInfo$smothed_aligned_data_set = horizental_acc_set
   return(totalInfo)
 }
 # ds1 = readDataSet("./new_exp/datas/run_bulding_north/","run",2)
-info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = T, removeIndex = 2)
+# info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5, noise_remove_func_1)
 # info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = T)
 
 # info_walk = space_sync(ds1, start_id = 150, end_id = 500, smoothNum = 5,isPrePCA = F)
 
 # info_walk_1 = space_sync(readSample(1, 1), start_id = 150, end_id = 800, smoothNum = 3)
+# space_sync(sensor_data_set = ds_i, aligned = F,smoothNum = 3,start_id = 1,end_id = 300, noise_remove_func = noise_remove_func_1)
 
 
 # info_walk = space_sync(list(walk_top, walk_legr, walk_legl), start_id = 150, end_id = 800, smoothNum = 5)
